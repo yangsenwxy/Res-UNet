@@ -1,4 +1,4 @@
-from keras.callbacks import ReduceLROnPlateau
+import numpy as np
 
 
 class TensorBoard(Callback):

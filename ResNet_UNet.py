@@ -164,13 +164,37 @@ class myUnet(object):
         model_list = glob.glob(ckpt_dir + 'model*.hdf5')
         model_list.sort()
         print('All model checkpoint avaible:')
-        
+        for i,model_name in enumerate(model_list):
+            print('epoch-{0},\t{1}'.format(i,model_name))
         choice =  int(input('Chose one,input the index:')) 
         model = load_model(model_list[choice])
-        model.evaluate(x=img_test,y=label_test,batch_size=8,verbose=1)
-        # Model.evaluate(x=img_test,y=label_test,batch_size=8,verbose=1)
+        model.save_weights(ckpt_dir + 'weight_epoch_' + str(epoch) + '.hdf5', True)
+        # model = load_model('/home/albelt/NoseData/CKPT/model_epoch_0.hdf5')
+        watch = model.evaluate(x=img_test,y=label_test,batch_size=8,verbose=1)
+        print(watch)
         print('test finished')
     
+    def predict(self,npy_dir,ckpt_dir):
+        
+        img_test,label_test = self.load_data(npy_dir)
+        img_test = img_test[-40:,:,:,:]
+        print('test data load done,use lastest 40 samples')
+        model_list = glob.glob(ckpt_dir + 'model*.hdf5')
+        model_list.sort()
+        print('All model checkpoint avaible:')
+        for i,model_name in enumerate(model_list):
+            print('epoch-{0},\t{1}'.format(i,model_name))
+        choice =  int(input('Chose one,input the index:')) 
+        model = load_model(model_list[choice])
+        # model.save_weights(ckpt_dir + 'weight_epoch_' + str(0) + '.hdf5', True)
+        # watch = model.evaluate(x=img_test,y=label_test,batch_size=8,verbose=1)
+        result = model.predict(x=img_test,batch_size=8,verbose=1)
+        print(result.shape)
+        result_save_path = npy_dir + 'predict.npy'
+        np.save(result_save_path,result)
+        print('predict result saved in {0}'.format(result_save_path))
+
+
 
 
 if __name__ == '__main__':
@@ -178,4 +202,5 @@ if __name__ == '__main__':
     myunet = myUnet(512,512)
     # myunet.train('/home/albelt/NoseData/NPY/','/home/albelt/NoseData/CKPT/',
                 #  gpu_count=gpu_count,epochs=1,resume_from_lastest=False)
-    myunet.test('/home/albelt/NoseData/NPY/','/home/albelt/NoseData/CKPT/')
+    # myunet.test('/home/albelt/NoseData/NPY/','/home/albelt/NoseData/CKPT/')
+    myunet.predict('/home/albelt/NoseData/NPY/','/home/albelt/NoseData/CKPT/')
