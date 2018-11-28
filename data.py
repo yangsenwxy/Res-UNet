@@ -8,7 +8,7 @@ class dataProcess(object):
     
     def __init__(self, out_rows, out_cols):
         self.out_rows = out_rows
-        self.out_cols = out_cols
+        self.out_cols = out_cols 
 
     def create_train_data(self,total_img_paths,total_label_paths,save_dir):
         '''
@@ -29,11 +29,14 @@ class dataProcess(object):
         for i in range(total_img_num):
             img = sitk.ReadImage(total_img_paths[i])
             img = sitk.GetArrayFromImage(img)
+            img = np.where(img<-200,-200,img)   #if pixel value < -200, let pixel value = -200
+            img = np.where(img>250,250,img)     #if pixel value > 250, let pixel value = 250
             img = np.expand_dims(img,2)
             img_data[i] = img
             
             label = sitk.ReadImage(total_label_paths[i])
             label = sitk.GetArrayFromImage(label)
+            label = np.where(label>1,1,label)            #convert 2 to 1
             label = np.expand_dims(label,2)
             label_data[i] = label
         print('loading done', label_data.shape)

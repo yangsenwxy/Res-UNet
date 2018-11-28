@@ -2,24 +2,28 @@ from keras.models import Model
 from keras.layers import Conv2D, Conv2DTranspose, Input, Lambda, MaxPooling2D, BatchNormalization, Activation, add
 from keras.layers.merge import concatenate
 from keras.layers import *
-from keras.optimizers import Adam
+from keras.layers import Activation
+# from keras.optimizers import Adam
+from keras import optimizers
 from keras.initializers import he_normal
 init = he_normal(seed=1)
 from keras.models import load_model
-from keras.callbacks import TensorBoard,ProgbarLogger,ModelCheckpoint,LearningRateScheduler
-from keras.utils import plot_model
+from keras.callbacks import TensorBoard,ReduceLROnPlateau
+# from keras.utils import plot_model
 from keras.metrics import f1score
+from keras import losses
+from keras.utils.np_utils import to_categorical
+# from keras.losses import binary_crossentropy
 
 from ResNet import identity_block, conv_block
 from data import dataProcess
-# from utils import f1score
 from preprocess import random_enhance
 import glob
 
-train_log = TensorBoard(log_dir='/home/albelt/NoseData/LOG',histogram_freq=1,write_graph=False,
-                        write_grads=False,batch_size=16,write_images=True)
-print_on_screen = ProgbarLogger(count_mode='samples')
 
+train_log = TensorBoard(log_dir='/home/albelt/NoseData/LOG',histogram_freq=1,write_graph=False,
+                        write_grads=False,batch_size=8,write_images=True)
+lr_decay = ReduceLROnPlateau(monitor='f1score',factor=0.1,patience=1,verbose=1,mode='max')
 
 def side_out(x, factor):
     x = Conv2D(1, (1, 1), activation=None, padding='same')(x)
@@ -41,17 +45,15 @@ class myUnet(object):
             img_train, label_train = mydata.load_train_data(npy_dir)
             return img_train,label_train
         else:
-            img_val, label_val = mydata.load_test_data()
+            img_val, label_val = mydata.load_test_data(npy_dir)
             return img_val,label_val
 
     def get_unet(self,gpu_count):
-        inputs = Input((self.img_rows, self.img_cols,1))      # 320, 480, 3
-        # Normalization
-        # x = Lambda(lambda x: x / 255, name='pre-process')(inputs)
+        inputs = Input((self.img_rows, self.img_cols,1))    
         x = Conv2D(16, (5, 5), strides=(1, 1), padding='same', name='conv1')(inputs)
         x = BatchNormalization(axis=-1, name='bn_conv1')(x)
-        x = Activation('relu', name='act1')(x)  # 320, 480, 3
-        #
+        x = Activation('relu', name='act1')(x)  
+        
         # Block 1
         c1 = conv_block(x, 3, (8, 8, 32), stage=1, block='a', strides=(1, 1))
         c1 = identity_block(c1, 3, (8, 8, 32), stage=1, block='b')      # 320, 480, 3
@@ -87,24 +89,28 @@ class myUnet(object):
         # fuse
         fuse = concatenate(inputs=[s1, s2, s3, s4], axis=-1)
         fuse = Conv2D(1, (1, 1), padding='same', activation=None)(fuse)       # 320 480 1
+        # fuse = to_categorical(fuse,3)
 
         # outputs
         # o1    = Activation('sigmoid', name='o1')(s1)
         # o2    = Activation('sigmoid', name='o2')(s2)
         # o3    = Activation('sigmoid', name='o3')(s3)
         # o4    = Activation('sigmoid', name='o4')(s4)
+
         ofuse = Activation('sigmoid', name='ofuse')(fuse)
-        model = Model(inputs=[inputs], outputs=ofuse)
+        
+        model = Model(inputs=[inputs], outputs=[ofuse])
+        # sgd = optimizers.SGD(lr=0.01, decay=1e-6, momentum=0.9, nesterov=True)
+        adam = optimizers.Adam(decay=1e-6)   #每个mini batch衰减一次
 
         if(gpu_count==0):
-            #model = Model(inputs=[inputs], outputs=[o1, o2, o3, o4, o5, ofuse])
-            model.compile(optimizer=Adam(lr=1e-4), loss='binary_crossentropy', metrics=[f1score])
+            model.compile(optimizer=adam, loss='binary_crossentropy', metrics=[f1score])
             print('model compile')
             return model
         else:
             from keras.utils import multi_gpu_model
             parallel_model = multi_gpu_model(model,gpus=gpu_count)
-            parallel_model.compile(optimizer=Adam(lr=1e-4), loss='binary_crossentropy', metrics=[f1score])
+            parallel_model.compile(optimizer=adam, loss='binary_crossentropy', metrics=[f1score])
             print('parallel model compile')
             return parallel_model
 
@@ -117,10 +123,10 @@ class myUnet(object):
             model_list = glob.glob(ckpt_dir + 'model*.hdf5')
             model_list.sort()
             model = load_model(model_list[-1])
-            last_epoch = int(model_list[-1].split('.')[0].split('_')[-1])
+            last_epoch = int(model_list[-1].split('.')[0].split('_')[-1].split('epoch')[-1])
             start_eopch = last_epoch + 1
             end_epoch = start_eopch + epochs
-            print('load model from lastest checkpoint')
+            print('load model from eopch{0}'.format(last_epoch))
             print(model.summary())
         else:
             model = self.get_unet(gpu_count)
@@ -137,23 +143,39 @@ class myUnet(object):
 
         print('Fitting model...')
         for epoch in range(start_eopch,end_epoch):
-            img_temp,label_temp = random_enhance(img_train,label_train)
-            model.fit(img_temp,label_temp, 
-                                batch_size=4, epochs=1, 
+            # img_temp,label_temp = random_enhance(img_train,label_train)
+
+            model.fit(img_train,label_train, 
+                                batch_size=8, epochs=20, 
                                 verbose=1,shuffle=True,
                                 validation_split=0.05,
-                                callbacks=[train_log])
-            model.save_weights(ckpt_dir + 'weight_epoch_' + str(epoch) + '.hdf5', True) #只保存模型参数
+                                callbacks=[train_log,lr_decay])
+            # model.save_weights(ckpt_dir + 'weight_epoch_' + str(epoch) + '.hdf5', True) #只保存模型参数
             model.save(ckpt_dir +  'model_epoch_' + str(epoch) +'.hdf5',True,True)      #保存网络结构、模型参数、optimizer的情况，用来直接加载执行预测
             print('\nepoch-{0} Finished'.format(epoch))
 
         print('\n\nTraining Finished')
+
+    def test(self,npy_dir,ckpt_dir):
+        img_test,label_test = self.load_data(npy_dir)
+        img_test = img_test[:100,:,:,:]
+        label_test = label_test[:100,:,:,:]
+        print('test data load done,use 100 samples')
+        model_list = glob.glob(ckpt_dir + 'model*.hdf5')
+        model_list.sort()
+        print('All model checkpoint avaible:')
         
+        choice =  int(input('Chose one,input the index:')) 
+        model = load_model(model_list[choice])
+        model.evaluate(x=img_test,y=label_test,batch_size=8,verbose=1)
+        # Model.evaluate(x=img_test,y=label_test,batch_size=8,verbose=1)
+        print('test finished')
     
 
 
 if __name__ == '__main__':
     gpu_count = 0
     myunet = myUnet(512,512)
-    myunet.train('/home/albelt/NoseData/NPY/','/home/albelt/NoseData/CKPT/',
-                 gpu_count=gpu_count,epochs=1,resume_from_lastest=True)
+    # myunet.train('/home/albelt/NoseData/NPY/','/home/albelt/NoseData/CKPT/',
+                #  gpu_count=gpu_count,epochs=1,resume_from_lastest=False)
+    myunet.test('/home/albelt/NoseData/NPY/','/home/albelt/NoseData/CKPT/')
