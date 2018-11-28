@@ -19,6 +19,7 @@ from ResNet import identity_block, conv_block
 from data import dataProcess
 from preprocess import random_enhance
 import glob
+import matplotlib.pyplot as plt
 
 
 train_log = TensorBoard(log_dir='/home/albelt/NoseData/LOG',histogram_freq=1,write_graph=False,

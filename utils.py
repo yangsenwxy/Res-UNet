@@ -55,6 +55,3 @@ def f1score(y_true, y_pred):
     '''Calculates the f-measure, the harmonic mean of precision and recall.
     '''
     return fbeta_score(y_true, y_pred, beta=1)
-
-from keras.callbacks import LambdaCallback
-batch_print_lr = LambdaCallback() 
