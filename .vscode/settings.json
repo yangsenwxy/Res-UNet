@@ -1,3 +1,16 @@
 {
-    "python.pythonPath": "/home/albelt/.conda/envs/tf/bin/python"
+    "python.pythonPath": "/home/albelt/.conda/envs/tf/bin/python",
+    "git.enabled": true,
+    "files.autoSave": "afterDelay",
+    "editor.wordWrap": "on",
+    "workbench.commandPalette.preserveInput": true,
+    "workbench.enableExperiments": false,
+    "workbench.startupEditor": "welcomePageInEmptyWorkbench",
+    "breadcrumbs.enabled": true,
+    "scm.alwaysShowProviders": true,
+    "scm.diffDecorationsGutterWidth": 5,
+    "update.showReleaseNotes": false,
+    "telemetry.enableCrashReporter": false,
+    "git.promptToSaveFilesBeforeCommit": true,
+    "git.showPushSuccessNotification": true
 }
