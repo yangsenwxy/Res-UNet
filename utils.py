@@ -1,57 +1,63 @@
-from keras import backend as K
-from keras.callbacks import Callback
+import numpy as np
+import matplotlib.pyplot  as plt
 
+if __name__ == '__main__':
+    npy_dir = '/home/albelt/NoseData/NPY/'
+    img = np.load(npy_dir+'train_img.npy')
+    img = img[-40:,:,:,:]
+    lab = np.load(npy_dir+'train_label.npy')
+    lab = lab[-40:,:,:,:]
+    pred = np.load(npy_dir+'predict.npy')
+    result_save_dir = '/home/albelt/NoseData/RESULT/'
+    for i in range(40):
+        img_ = img[i,:,:,0]
+        lab_ = lab[i,:,:,0]
+        pred_ = pred[i,:,:,0]
+        plt.imsave(result_save_dir+'img_'+str(i)+'.jpg',img_,cmap='gray')
+        plt.imsave(result_save_dir+'lab_'+str(i)+'.jpg',lab_,cmap='gray') 
+        plt.imsave(result_save_dir+'pred_'+str(i)+'.jpg',pred_,cmap='gray') 
 
-def precision(y_true, y_pred):
-    '''Calculates the precision, a metric for multi-label classification of
-    how many selected items are relevant.
-    '''
-    true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
-    predicted_positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
-    precision = true_positives / (predicted_positives + K.epsilon())
-    return precision
+import numpy as np
 
+def get_lab_pred(threshold):
+    label = np.load('./label.npy')
+    label = label.astype('uint8')
+    result = np.load('./result.npy')
+    result = np.where(result>threshold,1.0,result)
+    result = np.where(result!=1.0,0.0,result)
+    result = result.astype('uint8')
 
-def recall(y_true, y_pred):
-    '''Calculates the recall, a metric for multi-label classification of
-    how many relevant items are selected.
-    '''
-    true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
-    possible_positives = K.sum(K.round(K.clip(y_true, 0, 1)))
-    recall = true_positives / (possible_positives + K.epsilon())
-    return recall
+    return label[:10,:,:,0],result[:10,:,:,0]
 
+def cal():
+    lab, pred = get_lab_pred(0.8)
+    sample_num,row,column = lab.shape[0],lab.shape[1],lab.shape[2]
+    precisions,recalls,f1scores = [],[],[]
+    for i in range(sample_num):
+        TP,TN,FP,FN = 0.0,0.0,0.0,0.0
+        for j in range(row):
+            for k in range(column):
+                if(lab[i,j,k]==1 and pred[i,j,k]==1):
+                    TP += 1
+                elif(lab[i,j,k]==1 and pred[i,j,k]==0):
+                    FN += 1
+                elif(lab[i,j,k]==0 and pred[i,j,k]==1):
+                    FP += 1
+                else:
+                    TN += 1
+        precision = TP / (TP + FP)
+        recall = TP / (TP + FN)
+        f1score = 2 * (precision * recall) / (precision + recall)
+        precisions.append(precision)
+        recalls.append(recall)
+        f1scores.append(f1score)
+    return precisions,recalls,f1scores
 
-def fbeta_score(y_true, y_pred, beta=1):
-    '''Calculates the F score, the weighted harmonic mean of precision and recall.
-
-    This is useful for multi-label classification, where input samples can be
-    classified as sets of labels. By only using accuracy (precision) a model
-    would achieve a perfect score by simply assigning every class to every
-    input. In order to avoid this, a metric should penalize incorrect class
-    assignments as well (recall). The F-beta score (ranged from 0.0 to 1.0)
-    computes this, as a weighted mean of the proportion of correct class
-    assignments vs. the proportion of incorrect class assignments.
-
-    With beta = 1, this is equivalent to a F-measure. With beta < 1, assigning
-    correct classes becomes more important, and with beta > 1 the metric is
-    instead weighted towards penalizing incorrect class assignments.
-    '''
-    if beta < 0:
-        raise ValueError('The lowest choosable beta is zero (only precision).')
-        
-    # If there are no true positives, fix the F score at 0 like sklearn.
-    if K.sum(K.round(K.clip(y_true, 0, 1))) == 0:
-        return 0
-
-    p = precision(y_true, y_pred)
-    r = recall(y_true, y_pred)
-    bb = beta ** 2
-    fbeta_score = (1 + bb) * (p * r) / (bb * p + r + K.epsilon())
-    return fbeta_score
-
-
-def f1score(y_true, y_pred):
-    '''Calculates the f-measure, the harmonic mean of precision and recall.
-    '''
-    return fbeta_score(y_true, y_pred, beta=1)
+if __name__ == '__main__':
+    precisions,recalls,f1scores = cal()
+    p_mean, p_var = np.mean(precisions), np.var(precisions)
+    r_mean, r_var = np.mean(recalls), np.var(recalls)
+    f_mean,f_var = np.mean(f1scores), np.var(recalls)
+    print(p_mean,p_var)
+    pass
+    
