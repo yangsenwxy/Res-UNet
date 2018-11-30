@@ -13,6 +13,7 @@ from keras.callbacks import TensorBoard,ReduceLROnPlateau
 from keras.metrics import f1score
 from keras import losses
 from keras.utils.np_utils import to_categorical
+import keras.backend as K
 # from keras.losses import binary_crossentropy
 
 from ResNet import identity_block, conv_block
@@ -22,9 +23,17 @@ import glob
 import matplotlib.pyplot as plt
 
 
+
 train_log = TensorBoard(log_dir='/home/albelt/NoseData/LOG',histogram_freq=1,write_graph=False,
                         write_grads=False,batch_size=8,write_images=True)
 lr_decay = ReduceLROnPlateau(monitor='f1score',factor=0.1,patience=1,verbose=1,mode='max')
+
+# def f1score(y_true,y_pred):
+#     y_true,y_pred = y_true[:,:,0],y_pred[:,:,0]
+#     row,column = y_true.shape
+#     for i in range(row):
+#         for j in range(column):
+
 
 def side_out(x, factor):
     x = Conv2D(1, (1, 1), activation=None, padding='same')(x)
