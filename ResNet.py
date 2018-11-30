@@ -79,6 +79,7 @@ def identity_block(input_tensor, kernel_size, filters, stage, block):
     the first conv layer at main path is with strides=(2, 2)
     And the shortcut should have strides=(2, 2) as well
     """
+    
     filters1, filters2, filters3 = filters
     conv_name_base = 'res' + str(stage) + block + '_branch'
     bn_name_base = 'bn' + str(stage) + block + '_branch'

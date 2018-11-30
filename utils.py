@@ -1,3 +1,7 @@
+import ptvsd
+ptvsd.settrace(None,('0.0.0.0',8000))
+ptvsd.wait_for_attach()
+
 import numpy as np
 import matplotlib.pyplot  as plt
 
@@ -54,10 +58,14 @@ def cal():
     return precisions,recalls,f1scores
 
 if __name__ == '__main__':
-    precisions,recalls,f1scores = cal()
-    p_mean, p_var = np.mean(precisions), np.var(precisions)
-    r_mean, r_var = np.mean(recalls), np.var(recalls)
-    f_mean,f_var = np.mean(f1scores), np.var(recalls)
-    print(p_mean,p_var)
+    # precisions,recalls,f1scores = cal()
+    # p_mean, p_var = np.mean(precisions), np.var(precisions)
+    # r_mean, r_var = np.mean(recalls), np.var(recalls)
+    # f_mean,f_var = np.mean(f1scores), np.var(recalls)
+    # print(p_mean,p_var)
+    # pass
+    print('test1')
+    print('test2')
+    print('test3')
     pass
     
