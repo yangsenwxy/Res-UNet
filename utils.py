@@ -33,29 +33,29 @@ def get_lab_pred(threshold):
 
     return label[:10,:,:,0],result[:10,:,:,0]
 
-def cal():
-    lab, pred = get_lab_pred(0.8)
-    sample_num,row,column = lab.shape[0],lab.shape[1],lab.shape[2]
-    precisions,recalls,f1scores = [],[],[]
-    for i in range(sample_num):
-        TP,TN,FP,FN = 0.0,0.0,0.0,0.0
-        for j in range(row):
-            for k in range(column):
-                if(lab[i,j,k]==1 and pred[i,j,k]==1):
-                    TP += 1
-                elif(lab[i,j,k]==1 and pred[i,j,k]==0):
-                    FN += 1
-                elif(lab[i,j,k]==0 and pred[i,j,k]==1):
-                    FP += 1
-                else:
-                    TN += 1
-        precision = TP / (TP + FP)
-        recall = TP / (TP + FN)
-        f1score = 2 * (precision * recall) / (precision + recall)
-        precisions.append(precision)
-        recalls.append(recall)
-        f1scores.append(f1score)
-    return precisions,recalls,f1scores
+# def cal():
+#     lab, pred = get_lab_pred(0.8)
+#     sample_num,row,column = lab.shape[0],lab.shape[1],lab.shape[2]
+#     precisions,recalls,f1scores = [],[],[]
+#     for i in range(sample_num):
+#         TP,TN,FP,FN = 0.0,0.0,0.0,0.0
+#         for j in range(row):
+#             for k in range(column):
+#                 if(lab[i,j,k]==1 and pred[i,j,k]==1):
+#                     TP += 1
+#                 elif(lab[i,j,k]==1 and pred[i,j,k]==0):
+#                     FN += 1
+#                 elif(lab[i,j,k]==0 and pred[i,j,k]==1):
+#                     FP += 1
+#                 else:
+#                     TN += 1
+#         precision = TP / (TP + FP)
+#         recall = TP / (TP + FN)
+#         f1score = 2 * (precision * recall) / (precision + recall)
+#         precisions.append(precision)
+#         recalls.append(recall)
+#         f1scores.append(f1score)
+#     return precisions,recalls,f1scores
 
 if __name__ == '__main__':
     # precisions,recalls,f1scores = cal()
