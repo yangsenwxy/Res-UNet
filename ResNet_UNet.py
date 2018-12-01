@@ -1,3 +1,6 @@
+# import ptvsd
+# ptvsd.settrace(None,('0.0.0.0',8000))
+
 from keras.models import Model
 from keras.layers import Conv2D, Conv2DTranspose, Input, Lambda, MaxPooling2D, BatchNormalization, Activation, add
 from keras.layers.merge import concatenate
@@ -20,13 +23,13 @@ from ResNet import identity_block, conv_block
 from data import dataProcess
 from preprocess import random_enhance
 import glob
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
 
 
 train_log = TensorBoard(log_dir='/home/albelt/NoseData/LOG',histogram_freq=1,write_graph=False,
                         write_grads=False,batch_size=8,write_images=True)
-lr_decay = ReduceLROnPlateau(monitor='f1score',factor=0.1,patience=1,verbose=1,mode='max')
+lr_decay = ReduceLROnPlateau(monitor='val_f1score',factor=0.1,patience=1,verbose=1,mode='max')
 
 # def f1score(y_true,y_pred):
 #     y_true,y_pred = y_true[:,:,0],y_pred[:,:,0]
@@ -156,11 +159,11 @@ class myUnet(object):
             # img_temp,label_temp = random_enhance(img_train,label_train)
 
             model.fit(img_train,label_train, 
-                                batch_size=8, epochs=20, 
+                                batch_size=4, epochs=20, 
                                 verbose=1,shuffle=True,
-                                validation_split=0.05,
+                                validation_split=0.2,
                                 callbacks=[train_log,lr_decay])
-            # model.save_weights(ckpt_dir + 'weight_epoch_' + str(epoch) + '.hdf5', True) #只保存模型参数
+            model.save_weights(ckpt_dir + 'weight_epoch_' + str(epoch) + '.hdf5', True) #只保存模型参数
             model.save(ckpt_dir +  'model_epoch_' + str(epoch) +'.hdf5',True,True)      #保存网络结构、模型参数、optimizer的情况，用来直接加载执行预测
             print('\nepoch-{0} Finished'.format(epoch))
 
@@ -168,9 +171,9 @@ class myUnet(object):
 
     def test(self,npy_dir,ckpt_dir):
         img_test,label_test = self.load_data(npy_dir)
-        img_test = img_test[:100,:,:,:]
-        label_test = label_test[:100,:,:,:]
-        print('test data load done,use 100 samples')
+        img_test = img_test[-414:,:,:,:]
+        label_test = label_test[-414:,:,:,:]
+        print('test data load done,use 414 samples')
         model_list = glob.glob(ckpt_dir + 'model*.hdf5')
         model_list.sort()
         print('All model checkpoint avaible:')
@@ -178,7 +181,7 @@ class myUnet(object):
             print('epoch-{0},\t{1}'.format(i,model_name))
         choice =  int(input('Chose one,input the index:')) 
         model = load_model(model_list[choice])
-        model.save_weights(ckpt_dir + 'weight_epoch_' + str(epoch) + '.hdf5', True)
+        # model.save_weights(ckpt_dir + 'weight_epoch_' + str(epoch) + '.hdf5', True)
         # model = load_model('/home/albelt/NoseData/CKPT/model_epoch_0.hdf5')
         watch = model.evaluate(x=img_test,y=label_test,batch_size=8,verbose=1)
         print(watch)
@@ -187,8 +190,9 @@ class myUnet(object):
     def predict(self,npy_dir,ckpt_dir):
         
         img_test,label_test = self.load_data(npy_dir)
-        img_test = img_test[-40:,:,:,:]
-        print('test data load done,use lastest 40 samples')
+        img_test = img_test[-414:,:,:,:]
+        label_test = label_test[-414:,:,:,:]
+        print('test data load done,use lastest 414 samples')
         model_list = glob.glob(ckpt_dir + 'model*.hdf5')
         model_list.sort()
         print('All model checkpoint avaible:')
@@ -200,9 +204,12 @@ class myUnet(object):
         # watch = model.evaluate(x=img_test,y=label_test,batch_size=8,verbose=1)
         result = model.predict(x=img_test,batch_size=8,verbose=1)
         print(result.shape)
-        result_save_path = npy_dir + 'predict.npy'
-        np.save(result_save_path,result)
-        print('predict result saved in {0}'.format(result_save_path))
+        
+        from utils import cal_metrics
+        precisions,recalls,f1scores = cal_metrics(result[:,:,:,0],label_test[:,:,:,0],0.75)
+        print('Mean: precision-{0}, recall-{1}, f1score-{2}'.format(precisions.mean(),recalls.mean(),f1scores.mean()))
+        print('Variance: precison-{0},recalls-{1},f1score-{2}'.format(precisions.var(),recalls.var(),f1scores.var()))
+
 
 
 

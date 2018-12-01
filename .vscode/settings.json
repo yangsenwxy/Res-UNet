@@ -5,7 +5,6 @@
     "editor.wordWrap": "on",
     "workbench.commandPalette.preserveInput": true,
     "workbench.enableExperiments": false,
-    "workbench.startupEditor": "welcomePageInEmptyWorkbench",
     "breadcrumbs.enabled": true,
     "scm.alwaysShowProviders": true,
     "scm.diffDecorationsGutterWidth": 5,

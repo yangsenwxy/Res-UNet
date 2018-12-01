@@ -60,7 +60,7 @@ if __name__ == '__main__':
 
     sample_num = len(bbox_paths)
     sampling_index = {}
-    with open(raw_dir + 'sampling_index.txt','r') as f:
+    with open(raw_dir + 'sampling_index2.txt','r') as f:
         lines = f.readlines()
         for line in lines:
             name, low, high = line.split(',')

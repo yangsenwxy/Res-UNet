@@ -12,11 +12,13 @@
             "console": "integratedTerminal"
         },
         {
-            "name": "Python: Attach",
+            "name": "Python: Attach(Remote Debug)",
             "type": "python",
             "request": "attach",
-            "port": 5678,
-            "host": "localhost"
+            "localRoot": "/home/albelt/GitHub/鼻窦肿瘤分割实验",
+            "remoteRoot": "/home/albelt/GitHub/鼻窦肿瘤分割实验",
+            "port": 8000,
+            "host": "219.216.64.52"
         },
         {
             "name": "Python: Module",

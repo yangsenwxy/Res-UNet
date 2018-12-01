@@ -1,0 +1,26 @@
+{
+    "remotePath": "/home/albelt/GitHub/鼻窦肿瘤分割实验",
+    "host": "219.216.64.52",
+    "username": "root",
+    "password": "dzf",
+    "port": 2222,
+    "secure": false,
+    "protocol": "sftp",
+    "uploadOnSave": true,
+    "passive": false,
+    "debug": false,
+    "privateKeyPath": null,
+    "passphrase": null,
+    "agent": null,
+    "allow": [],
+    "ignore": [
+        "\\.vscode",
+        "\\.git",
+        "\\.DS_Store"
+    ],
+    "generatedFiles": {
+        "uploadOnSave": false,
+        "extensionsToInclude": [],
+        "path": ""
+    }
+}
