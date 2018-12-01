@@ -58,8 +58,8 @@ class myUnet(object):
             img_train, label_train = mydata.load_train_data(npy_dir)
             return img_train,label_train
         else:
-            img_val, label_val = mydata.load_test_data(npy_dir)
-            return img_val,label_val
+            img_test, label_test = mydata.load_test_data(npy_dir)
+            return img_test, label_test
 
     def get_unet(self,gpu_count):
         inputs = Input((self.img_rows, self.img_cols,1))    
@@ -161,7 +161,7 @@ class myUnet(object):
             # model.fit(img_train,label_train, 
                                 # batch_size=4, epochs=20, 
                                 # verbose=1,shuffle=True,
-                                # validation_split=0.2,
+                                # validation_split=0,
                                 # callbacks=[train_log,lr_decay])
             model.save_weights(ckpt_dir + 'weight_epoch_' + str(epoch) + '.hdf5', True) #只保存模型参数
             model.save(ckpt_dir +  'model_epoch_' + str(epoch) +'.hdf5',True,True)      #保存网络结构、模型参数、optimizer的情况，用来直接加载执行预测
@@ -170,10 +170,8 @@ class myUnet(object):
         print('\n\nTraining Finished')
 
     def test(self,npy_dir,ckpt_dir):
-        img_test,label_test = self.load_data(npy_dir)
-        img_test = img_test[-414:,:,:,:]
-        label_test = label_test[-414:,:,:,:]
-        print('test data load done,use 414 samples')
+        img_test,label_test = self.load_data(npy_dir,False)
+        print('test data load done,use {0} samples'.format(img_test.shape[0]))
         model_list = glob.glob(ckpt_dir + 'model*.hdf5')
         model_list.sort()
         print('All model checkpoint avaible:')
@@ -189,13 +187,8 @@ class myUnet(object):
     
     def predict(self,npy_dir,ckpt_dir):
         
-        img_test,label_test = self.load_data(npy_dir)
-        img_test = img_test[-414:,:,:,:]
-        label_test = label_test[-414:,:,:,:]
-        # img_test = img_test[-8:,:,:,:]
-        # label_test = label_test[-8:,:,:,:]
-
-        print('test data load done,use lastest 414 samples')
+        img_test,label_test = self.load_data(npy_dir,False)
+        print('test data load done,use lastest {0} samples'.format(img_test.shape[0]))
         model_list = glob.glob(ckpt_dir + 'model*.hdf5')
         model_list.sort()
         print('All model checkpoint avaible:')
@@ -207,6 +200,8 @@ class myUnet(object):
         # watch = model.evaluate(x=img_test,y=label_test,batch_size=8,verbose=1)
         result = model.predict(x=img_test,batch_size=8,verbose=1)
         print(result.shape)
+        np.save(npy_dir + 'test_pred.npy',result)
+        print('Predict result saved in {0}'.format(npy_dir))
         
         from utils import cal_metrics
         precisions,recalls,f1scores = cal_metrics(result[:,:,:,0],label_test[:,:,:,0],0.75)
@@ -222,5 +217,5 @@ if __name__ == '__main__':
     myunet = myUnet(512,512)
     # myunet.train('/home/albelt/NoseData/NPY/','/home/albelt/NoseData/CKPT/',
                 #  gpu_count=gpu_count,epochs=1,resume_from_lastest=False)
-    # myunet.test('/home/albelt/NoseData/NPY/','/home/albelt/NoseData/CKPT/')
+    myunet.test('/home/albelt/NoseData/NPY/','/home/albelt/NoseData/CKPT/')
     myunet.predict('/home/albelt/NoseData/NPY/','/home/albelt/NoseData/CKPT/')
