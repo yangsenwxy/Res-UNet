@@ -150,19 +150,19 @@ class myUnet(object):
 
         # # plot_model(model,to_file='./net.jpg')
         
-        print("loading data")
-        img_train, label_train = self.load_data(npy_dir)
-        print("loading data done")
+        # print("loading data")
+        # img_train, label_train = self.load_data(npy_dir)
+        # print("loading data done")
 
         print('Fitting model...')
         for epoch in range(start_eopch,end_epoch):
             # img_temp,label_temp = random_enhance(img_train,label_train)
 
-            model.fit(img_train,label_train, 
-                                batch_size=4, epochs=20, 
-                                verbose=1,shuffle=True,
-                                validation_split=0.2,
-                                callbacks=[train_log,lr_decay])
+            # model.fit(img_train,label_train, 
+                                # batch_size=4, epochs=20, 
+                                # verbose=1,shuffle=True,
+                                # validation_split=0.2,
+                                # callbacks=[train_log,lr_decay])
             model.save_weights(ckpt_dir + 'weight_epoch_' + str(epoch) + '.hdf5', True) #只保存模型参数
             model.save(ckpt_dir +  'model_epoch_' + str(epoch) +'.hdf5',True,True)      #保存网络结构、模型参数、optimizer的情况，用来直接加载执行预测
             print('\nepoch-{0} Finished'.format(epoch))
@@ -192,6 +192,9 @@ class myUnet(object):
         img_test,label_test = self.load_data(npy_dir)
         img_test = img_test[-414:,:,:,:]
         label_test = label_test[-414:,:,:,:]
+        # img_test = img_test[-8:,:,:,:]
+        # label_test = label_test[-8:,:,:,:]
+
         print('test data load done,use lastest 414 samples')
         model_list = glob.glob(ckpt_dir + 'model*.hdf5')
         model_list.sort()
@@ -207,10 +210,10 @@ class myUnet(object):
         
         from utils import cal_metrics
         precisions,recalls,f1scores = cal_metrics(result[:,:,:,0],label_test[:,:,:,0],0.75)
-        print('Mean: precision-{0}, recall-{1}, f1score-{2}'.format(precisions.mean(),recalls.mean(),f1scores.mean()))
-        print('Variance: precison-{0},recalls-{1},f1score-{2}'.format(precisions.var(),recalls.var(),f1scores.var()))
+        print('Mean: precision:{0}, recall:{1}, f1score:{2}'.format(precisions.mean(),recalls.mean(),f1scores.mean()))
+        print('Variance: precison:{0},recalls:{1},f1score:{2}'.format(precisions.var(),recalls.var(),f1scores.var()))
 
-
+        print('predict finished')
 
 
 

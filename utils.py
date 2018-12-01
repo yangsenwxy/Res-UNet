@@ -3,10 +3,13 @@ import matplotlib.pyplot  as plt
 
 
 def cal_metrics(pred_arr,lab_arr,threshold):
-    
+    np.save('/home/albelt/NoseData/NPY/test_lab.npy',lab_arr)
+    np.save('/home/albelt/NoseData/NPY/test_pred.npy',pred_arr)
+    print('predict and label npy file have been saved in NPY folder')
+
     sample_num,row,column = lab_arr.shape[0],lab_arr.shape[1],lab_arr.shape[2]
     precisions,recalls,f1scores = [],[],[]
-    pred_arr = pred_arr.where(pred_arr>=threshold,1.0,0.0)
+    pred_arr = np.where(pred_arr>=threshold,1.0,0.0)
     pred_arr = pred_arr.astype('uint8')
     lab_arr = lab_arr.astype('uint8')
     for i in range(sample_num):
